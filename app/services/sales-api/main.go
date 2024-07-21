@@ -36,7 +36,7 @@ func main() {
 	}
 }
 func run(ctx context.Context, log *logger.Logger) error {
-	//log.Info(ctx, "startup", "status", "started")
+
 	// -------------------------------------------------------------------------
 	// GOMAXPROCS
 

@@ -1,4 +1,5 @@
-FROM golang:1.22 build_sales-api
+# Build the Go Binary.
+FROM golang:1.22 as build_sales-api
 ENV CGO_ENABLED 0
 ARG BUILD_REF
 
@@ -35,4 +36,4 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.authors="Owen Adirah <owen@owezzy.com>" \
       org.opencontainers.image.source="https://github.com/owezzy/service-5/tree/master/app/services/sales-api" \
       org.opencontainers.image.revision="${BUILD_REF}" \
-      org.opencontainers.image.vendor="Ardan Labs"
+      org.opencontainers.image.vendor="Owezzy Software Consultancy ltd"

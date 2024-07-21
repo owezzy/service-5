@@ -6,12 +6,17 @@
     <option name="recentlyUsedProfiles">
       <list>
         <option value="profile:default" />
+        <option value="profile:owezzy" />
       </list>
     </option>
     <option name="recentlyUsedRegions">
       <list>
         <option value="us-east-1" />
+        <option value="eu-west-2" />
       </list>
     </option>
+  </component>
+  <component name="explorerToolWindow">
+    <option name="selectedTab" value="Explorer" />
   </component>
 </project>
