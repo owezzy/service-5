@@ -89,17 +89,17 @@ spec:
 # For CPU resource units, the quantity expression 0.1 is equivalent to the 
 # expression 100m, which can be read as "one hundred millicpu". 
 
-      containers:
-      - name: sales-api
-        resources:
-          requests:
-            cpu: "250m" # I need access to 1/4 of a core on the node.
-          limits:
-            cpu: "250m" # Execute instructions 25ms/100ms on my 1 core.
-
-      - name: metrics
-        resources:
-          requests:
-            cpu: "100m"
-          limits:
-            cpu: "100m"
+#      containers:
+#      - name: sales-api
+#        resources:
+#          requests:
+#            cpu: "250m" # I need access to 1/4 of a core on the node.
+#          limits:
+#            cpu: "250m" # Execute instructions 25ms/100ms on my 1 core.
+#
+#      - name: metrics
+#        resources:
+#          requests:
+#            cpu: "100m"
+#          limits:
+#            cpu: "100m"
