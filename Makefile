@@ -96,7 +96,7 @@ dev-restart:
 dev-update: all dev-load dev-restart
 
 # run on YAML config change
-dev-update-apply: all dev-load dev-apply
+dev-update-apply:  all dev-load dev-apply
 
 # ------------------------------------------------------------------------------
 
@@ -108,3 +108,38 @@ dev-describe-deployment:
 
 dev-describe-sales:
 	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(APP)
+
+# ==============================================================================
+# Modules support
+
+deps-reset:
+	git checkout -- go.mod
+	go mod tidy
+	go mod vendor
+
+tidy:
+	go mod tidy
+	go mod vendor
+
+deps-list:
+	go list -m -u -mod=readonly all
+
+deps-upgrade:
+	go get -u -v ./...
+	go mod tidy
+	go mod vendor
+
+deps-cleancache:
+	go clean -modcache
+
+list:
+	go list -mod=mod all
+
+# ==============================================================================
+# Dev Stuff
+
+run:
+	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
+
+run-help:
+	go run app/services/sales-api/main.go --help | go run app/tooling/logfmt/main.go
