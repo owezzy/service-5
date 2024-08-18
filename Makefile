@@ -28,8 +28,15 @@ SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
 METRICS_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME)-metrics:$(VERSION)
 
 
+# ==============================================================================
+# run Stuff
+
 run:
 	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
+
+run-help:
+	go run app/services/sales-api/main.go --help | go run app/tooling/logfmt/main.go
+
 
 # ==============================================================================
 # Building containers
@@ -135,11 +142,3 @@ deps-cleancache:
 list:
 	go list -mod=mod all
 
-# ==============================================================================
-# Dev Stuff
-
-run:
-	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
-
-run-help:
-	go run app/services/sales-api/main.go --help | go run app/tooling/logfmt/main.go
