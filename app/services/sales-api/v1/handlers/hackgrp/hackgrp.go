@@ -1,15 +1,16 @@
 package hackgrp
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 )
 
-func Hack(w http.ResponseWriter, r *http.Request) {
+func Hack(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	status := struct {
 		Status string
 	}{
-		Status: "OK MF",
+		Status: "OK MF AGN",
 	}
-	json.NewEncoder(w).Encode(status)
+	return json.NewEncoder(w).Encode(status)
 }
