@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/owezzy/service-5/business/web/v1/mid"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
 	"os"
@@ -21,7 +22,7 @@ type RouteAdder interface {
 
 // APIMux constructs a http.Handler with all application routes defined.
 func APIMux(cfg APIMuxConfig, routerAdder RouteAdder) *web.App {
-	app := web.NewApp(cfg.Shutdown)
+	app := web.NewApp(cfg.Shutdown, mid.Logger(cfg.Log))
 
 	routerAdder.Add(app, cfg)
 
