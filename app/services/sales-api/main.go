@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ardanlabs/conf/v3"
+	v1 "github.com/owezzy/service-5/business/web/v1"
 	"github.com/owezzy/service-5/foundation/logger"
 	"net/http"
 	"os"
@@ -85,9 +86,17 @@ func run(ctx context.Context, log *logger.Logger) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
+	cfgMux := v1.APIMuxConfig{
+		Build:    build,
+		Shutdown: shutdown,
+		Log:      log,
+	}
+
+	apiMux := v1.APIMux(cfgMux)
+
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      nil,
+		Handler:      apiMux,
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
