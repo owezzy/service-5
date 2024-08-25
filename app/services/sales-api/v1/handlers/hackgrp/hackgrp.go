@@ -2,7 +2,7 @@ package hackgrp
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/owezzy/service-5/foundation/web"
 	"net/http"
 )
 
@@ -12,5 +12,5 @@ func Hack(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	}{
 		Status: "OK MF AGN",
 	}
-	return json.NewEncoder(w).Encode(status)
+	return web.Respond(ctx, w, status, http.StatusOK)
 }
