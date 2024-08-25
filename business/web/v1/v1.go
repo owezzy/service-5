@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"github.com/dimfeld/httptreemux/v5"
 	"github.com/owezzy/service-5/foundation/logger"
+	"github.com/owezzy/service-5/foundation/web"
 	"os"
 )
 
@@ -16,14 +16,14 @@ type APIMuxConfig struct {
 // RouteAdder defines behavior that sets the routes to bind for an instance
 // of the service.
 type RouteAdder interface {
-	Add(app *httptreemux.ContextMux, cfg APIMuxConfig)
+	Add(app *web.App, cfg APIMuxConfig)
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
-func APIMux(cfg APIMuxConfig, routerAdder RouteAdder) *httptreemux.ContextMux {
-	mux := httptreemux.NewContextMux()
+func APIMux(cfg APIMuxConfig, routerAdder RouteAdder) *web.App {
+	app := web.NewApp(cfg.Shutdown)
 
-	routerAdder.Add(mux, cfg)
+	routerAdder.Add(app, cfg)
 
-	return mux
+	return app
 }
