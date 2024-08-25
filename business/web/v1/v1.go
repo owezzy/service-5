@@ -1,10 +1,8 @@
 package v1
 
 import (
-	"encoding/json"
 	"github.com/dimfeld/httptreemux/v5"
 	"github.com/owezzy/service-5/foundation/logger"
-	"net/http"
 	"os"
 )
 
@@ -15,19 +13,17 @@ type APIMuxConfig struct {
 	Log      *logger.Logger
 }
 
+// RouteAdder defines behavior that sets the routes to bind for an instance
+// of the service.
+type RouteAdder interface {
+	Add(app *httptreemux.ContextMux, cfg APIMuxConfig)
+}
+
 // APIMux constructs a http.Handler with all application routes defined.
-func APIMux(cfg APIMuxConfig) http.Handler {
+func APIMux(cfg APIMuxConfig, routerAdder RouteAdder) *httptreemux.ContextMux {
 	mux := httptreemux.NewContextMux()
 
-	h := func(w http.ResponseWriter, r *http.Request) {
-		status := struct {
-			Status string
-		}{
-			Status: "OK MF",
-		}
-		json.NewEncoder(w).Encode(status)
-	}
+	routerAdder.Add(mux, cfg)
 
-	mux.Handle(http.MethodGet, "/hack", h)
 	return mux
 }

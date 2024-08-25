@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ardanlabs/conf/v3"
+	"github.com/owezzy/service-5/app/services/sales-api/v1/handlers"
 	v1 "github.com/owezzy/service-5/business/web/v1"
 	"github.com/owezzy/service-5/foundation/logger"
 	"net/http"
@@ -92,7 +93,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		Log:      log,
 	}
 
-	apiMux := v1.APIMux(cfgMux)
+	apiMux := v1.APIMux(cfgMux, handlers.Routes{})
 
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
