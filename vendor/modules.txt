@@ -12,3 +12,8 @@ github.com/go-json-experiment/json/internal/jsonflags
 github.com/go-json-experiment/json/internal/jsonopts
 github.com/go-json-experiment/json/internal/jsonwire
 github.com/go-json-experiment/json/jsontext
+# github.com/google/go-cmp v0.6.0
+## explicit; go 1.13
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid

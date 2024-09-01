@@ -8,6 +8,7 @@ import (
 	"github.com/owezzy/service-5/app/services/sales-api/v1/handlers"
 	v1 "github.com/owezzy/service-5/business/web/v1"
 	"github.com/owezzy/service-5/foundation/logger"
+	"github.com/owezzy/service-5/foundation/web"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	traceIDFn := func(ctx context.Context) string {
-		return ""
+		return web.GetTraceID(ctx)
 	}
 
 	log = logger.NewWithEvents(os.Stdout, logger.LevelInfo, "SALES-API", traceIDFn, events)
