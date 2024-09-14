@@ -2,11 +2,17 @@ package hackgrp
 
 import (
 	"context"
+	"errors"
+	"github.com/owezzy/service-5/business/web/v1/response"
 	"github.com/owezzy/service-5/foundation/web"
+	"math/rand"
 	"net/http"
 )
 
 func Hack(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if n := rand.Intn(100) % 2; n == 0 {
+		return response.NewError(errors.New("CUSTOM ERROR"), http.StatusBadRequest)
+	}
 	status := struct {
 		Status string
 	}{
