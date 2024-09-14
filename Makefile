@@ -39,11 +39,15 @@ run-help:
 
 curl:
 	curl -il http://localhost:3000/hack
+
+
+load:
+	hey -m GET -c 100 -n 100000 "http://localhost:3000/hack"
 # ==============================================================================
 # Metrics and Tracing
 
 metrics-view-sc:
-	expvarmon -ports="localhost:4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+	expvarmon -ports="localhost:3000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 
 metrics-view:
 	expvarmon -ports="localhost:3001" -endpoint="/metrics" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
@@ -148,7 +152,7 @@ deps-upgrade:
 	go mod tidy
 	go mod vendor
 
-deps-cleancache:
+deps-clean-cache:
 	go clean -modcache
 
 list:
