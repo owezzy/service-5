@@ -7,6 +7,7 @@ import (
 	"github.com/ardanlabs/conf/v3"
 	"github.com/owezzy/service-5/app/services/sales-api/v1/handlers"
 	v1 "github.com/owezzy/service-5/business/web/v1"
+	"github.com/owezzy/service-5/business/web/v1/debug"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
 	"net/http"
@@ -111,6 +112,19 @@ func run(ctx context.Context, log *logger.Logger) error {
 		log.Info(ctx, "startup", "status", "api router started", "host", api.Addr)
 		serverErrors <- api.ListenAndServe()
 	}()
+
+	// -------------------------------------------------------------------------
+	// Start Debug Service
+
+	go func() {
+		log.Info(ctx, "startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
+
+		if err := http.ListenAndServe(cfg.Web.DebugHost, debug.Mux()); err != nil {
+			log.Error(ctx, "shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "msg", err)
+		}
+
+	}()
+
 	// -------------------------------------------------------------------------
 	// Shutdown
 
