@@ -2,6 +2,7 @@ package mid
 
 import (
 	"context"
+	"github.com/owezzy/service-5/business/web/v1/auth"
 	"github.com/owezzy/service-5/business/web/v1/response"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
@@ -33,6 +34,12 @@ func Errors(log *logger.Logger) web.Middleware {
 						Error: reqErr.Error(),
 					}
 					status = reqErr.Status
+
+				case auth.IsAuthError(err):
+					er = response.ErrorDocument{
+						Error: http.StatusText(http.StatusUnauthorized),
+					}
+					status = http.StatusUnauthorized
 
 				default:
 					er = response.ErrorDocument{

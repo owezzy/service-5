@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/owezzy/service-5/business/web/v1/auth"
 	"github.com/owezzy/service-5/business/web/v1/mid"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
@@ -12,6 +13,7 @@ type APIMuxConfig struct {
 	Build    string
 	Shutdown chan os.Signal
 	Log      *logger.Logger
+	Auth     *auth.Auth
 }
 
 // RouteAdder defines behavior that sets the routes to bind for an instance
