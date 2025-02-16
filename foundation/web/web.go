@@ -68,6 +68,21 @@ func (a *App) Handle(method string, path string, handler Handler, mw ...Middlewa
 
 }
 
+//======================demo
+
+func (a *App) handle(method string, group string, path string, handler Handler, mw ...Middleware) {
+	handler = wrapMiddleware(mw, handler)
+	handler = wrapMiddleware(a.mw, handler)
+
+	a.handle(method, group, path, handler)
+}
+
+// HandleNoMiddleware sets a handler function for a given HTTP method and path pair
+// to the application server mux. Does not include the application middleware.
+func (a *App) HandleNoMiddleware(method string, group string, path string, handler Handler) {
+	a.handle(method, group, path, handler)
+}
+
 // validateShutdown validates the error for special conditions that do not
 // warrant an actual shutdown by the system.
 func validateShutdown(err error) bool {

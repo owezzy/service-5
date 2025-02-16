@@ -43,6 +43,25 @@ curl:
 
 load:
 	hey -m GET -c 100 -n 100000 "http://localhost:3000/hack"
+
+curl-auth:
+	curl -il -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/hackauth
+
+load-hack:
+	hey -m GET -c 100 -n 100000 "http://localhost:3000/v1/hack"
+
+admin:
+	go run app/tooling/sales-admin/main.go
+
+ready:
+	curl -il http://localhost:3000/v1/readiness
+
+live:
+	curl -il http://localhost:3000/v1/liveness
+
+curl-create:
+	curl -il -X POST -H 'Content-Type: application/json' -d '{"name":"bill","email":"b@gmail.com","roles":["ADMIN"],"department":"IT","password":"123","passwordConfirm":"123"}' http://localhost:3000/v1/users
+
 # ==============================================================================
 # Metrics and Tracing
 
@@ -122,7 +141,6 @@ dev-update: all dev-load dev-restart
 dev-update-apply:  all dev-load dev-apply
 
 # ------------------------------------------------------------------------------
-
 dev-logs:
 	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) --all-containers=true -f --tail=100 --max-log-requests=6 | go run app/tooling/logfmt/main.go -service=$(SERVICE_NAME)
 
