@@ -36,11 +36,6 @@ func (h *Handlers) Readiness(ctx context.Context, w http.ResponseWriter, r *http
 
 	status := "ok"
 	statusCode := http.StatusOK
-	if err := db.StatusCheck(ctx, h.db); err != nil {
-		status = "db not ready"
-		statusCode = http.StatusInternalServerError
-		h.log.Info(ctx, "readiness failure", "status", status)
-	}
 
 	data := struct {
 		Status string `json:"status"`
