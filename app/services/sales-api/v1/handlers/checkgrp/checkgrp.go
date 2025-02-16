@@ -3,6 +3,7 @@ package checkgrp
 
 import (
 	"context"
+	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
 	"net/http"
 	"os"
@@ -12,12 +13,14 @@ import (
 // Handlers manages the set of check endpoints.
 type Handlers struct {
 	build string
+	log   *logger.Logger
 }
 
 // New constructs a Handlers api for the check group.
-func New(build string) *Handlers {
+func New(build string, log *logger.Logger) *Handlers {
 	return &Handlers{
 		build: build,
+		log:   log,
 	}
 }
 
@@ -33,6 +36,11 @@ func (h *Handlers) Readiness(ctx context.Context, w http.ResponseWriter, r *http
 
 	status := "ok"
 	statusCode := http.StatusOK
+	if err := db.StatusCheck(ctx, h.db); err != nil {
+		status = "db not ready"
+		statusCode = http.StatusInternalServerError
+		h.log.Info(ctx, "readiness failure", "status", status)
+	}
 
 	data := struct {
 		Status string `json:"status"`
