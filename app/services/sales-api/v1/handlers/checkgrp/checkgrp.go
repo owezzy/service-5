@@ -17,10 +17,10 @@ type Handlers struct {
 }
 
 // New constructs a Handlers api for the check group.
-func New(build string) *Handlers {
+func New(build string, log *logger.Logger) *Handlers {
 	return &Handlers{
 		build: build,
-		//log:   log,
+		log:   log,
 	}
 }
 
@@ -42,6 +42,7 @@ func (h *Handlers) Readiness(ctx context.Context, w http.ResponseWriter, r *http
 	}{
 		Status: status,
 	}
+	h.log.Info(ctx, "Readiness request", "status", status)
 
 	return web.Respond(ctx, w, data, statusCode)
 }
@@ -78,6 +79,8 @@ func (h *Handlers) Liveness(ctx context.Context, w http.ResponseWriter, r *http.
 		Namespace:  os.Getenv("KUBERNETES_NAMESPACE"),
 		GOMAXPROCS: os.Getenv("GOMAXPROCS"),
 	}
+
+	h.log.Info(ctx, "Liveness request", "status", "OK")
 
 	// This handler provides a free timer loop.
 
