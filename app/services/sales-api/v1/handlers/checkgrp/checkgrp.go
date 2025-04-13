@@ -17,10 +17,10 @@ type Handlers struct {
 }
 
 // New constructs a Handlers api for the check group.
-func New(build string, log *logger.Logger) *Handlers {
+func New(build string) *Handlers {
 	return &Handlers{
 		build: build,
-		log:   log,
+		//log:   log,
 	}
 }
 

@@ -42,10 +42,24 @@ func (a *App) SignalShutdown() {
 
 // Handle sets a handler function for a given HTTP method and path pair
 // to the application server mux.
-func (a *App) Handle(method string, path string, handler Handler, mw ...Middleware) {
+func (a *App) Handle(method string, group string, path string, handler Handler, mw ...Middleware) {
 
 	handler = wrapMiddleware(mw, handler)
 	handler = wrapMiddleware(a.mw, handler)
+
+	a.handle(method, group, path, handler)
+
+}
+
+//======================demo
+
+func (a *App) handle(method string, group string, path string, handler Handler, mw ...Middleware) {
+	handler = wrapMiddleware(mw, handler)
+	handler = wrapMiddleware(a.mw, handler)
+	finalPath := path
+	if group != "" {
+		finalPath = "/" + group + path
+	}
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 
@@ -64,17 +78,8 @@ func (a *App) Handle(method string, path string, handler Handler, mw ...Middlewa
 			}
 		}
 	}
-	a.ContextMux.Handle(method, path, h)
 
-}
-
-//======================demo
-
-func (a *App) handle(method string, group string, path string, handler Handler, mw ...Middleware) {
-	handler = wrapMiddleware(mw, handler)
-	handler = wrapMiddleware(a.mw, handler)
-
-	a.handle(method, group, path, handler)
+	a.ContextMux.Handle(method, finalPath, h)
 }
 
 // HandleNoMiddleware sets a handler function for a given HTTP method and path pair
