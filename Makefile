@@ -11,7 +11,7 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 GOLANG          := golang:1.22
 ALPINE          := alpine:3.19
 KIND            := kindest/node:v1.29.1@sha256:a0cc28af37cf39b019e2b448c54d1a3f789de32536cb5a5db61a49623e527144
-POSTGRES        := postgres:16.1
+POSTGRES        := postgres:15.4
 GRAFANA         := grafana/grafana:10.3.0
 PROMETHEUS      := prom/prometheus:v2.49.0
 TEMPO           := grafana/tempo:2.3.0
@@ -100,7 +100,7 @@ dev-up:
 
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 
-#	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
+	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
 #	kind load docker-image $(GRAFANA) --name $(KIND_CLUSTER)
 #	kind load docker-image $(PROMETHEUS) --name $(KIND_CLUSTER)
 #	kind load docker-image $(TEMPO) --name $(KIND_CLUSTER)
@@ -128,8 +128,14 @@ dev-load:
 # docker-image (possibly a tagging issue?) but the below works.
 
 dev-apply:
+	kustomize build zarf/k8s/dev/database | kubectl apply -f -
+	kubectl rollout status --namespace=$(NAMESPACE) --watch --timeout=120s sts/database
+
 	kustomize build zarf/k8s/dev/sales | kubectl apply -f -
 	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --timeout=120s --for=condition=Ready
+
+
+
 
 dev-restart:
 	kubectl rollout restart deployment $(APP) --namespace=$(NAMESPACE)
@@ -149,6 +155,14 @@ dev-describe-deployment:
 
 dev-describe-sales:
 	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(APP)
+
+
+dev-logs-db:
+	kubectl logs --namespace=$(NAMESPACE) -l app=database --all-containers=true -f --tail=100
+
+
+pgcli:
+	pgcli postgresql://postgres:postgres@localhost
 
 # ==============================================================================
 # Modules support
