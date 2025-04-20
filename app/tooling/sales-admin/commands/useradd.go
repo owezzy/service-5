@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/owezzy/service-5/business/core/event"
+	"github.com/owezzy/service-5/business/core/user"
 	"github.com/owezzy/service-5/business/core/user/stores/userdb"
 	db "github.com/owezzy/service-5/business/data/dbsql/pgx"
 	"github.com/owezzy/service-5/foundation/logger"
 	"net/mail"
-	"os/user"
 	"time"
 )
 

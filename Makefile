@@ -62,6 +62,18 @@ live:
 curl-create:
 	curl -il -X POST -H 'Content-Type: application/json' -d '{"name":"bill","email":"b@gmail.com","roles":["ADMIN"],"department":"IT","password":"123","passwordConfirm":"123"}' http://localhost:3000/v1/users
 
+
+
+# ==============================================================================
+# Administration
+
+migrate:
+	go run app/tooling/sales-admin/main.go migrate
+
+seed: migrate
+	go run app/tooling/sales-admin/main.go seed
+
+
 # ==============================================================================
 # Metrics and Tracing
 
@@ -163,6 +175,9 @@ dev-logs-db:
 
 pgcli:
 	pgcli postgresql://postgres:postgres@localhost
+
+dev-logs-init:
+	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) -f --tail=100 -c init-migrate
 
 # ==============================================================================
 # Modules support
