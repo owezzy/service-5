@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/ardanlabs/conf/v3"
 	"github.com/owezzy/service-5/app/services/sales-api/v1/handlers"
+	db "github.com/owezzy/service-5/business/data/dbsql/pgx"
 	v1 "github.com/owezzy/service-5/business/web/v1"
 	"github.com/owezzy/service-5/business/web/v1/auth"
 	"github.com/owezzy/service-5/business/web/v1/debug"
@@ -68,6 +69,16 @@ func run(ctx context.Context, log *logger.Logger) error {
 			DebugHost       string        `conf:"default:0.0.0.0:4000"`
 		}
 
+		DB struct {
+			User         string `conf:"default:postgres"`
+			Password     string `conf:"default:postgres,mask"`
+			Host         string `conf:"default:database-service.sales-system.svc.cluster.local"`
+			Name         string `conf:"default:postgres"`
+			MaxIdleConns int    `conf:"default:2"`
+			MaxOpenConns int    `conf:"default:0"`
+			DisableTLS   bool   `conf:"default:true"`
+		}
+
 		Auth struct {
 			KeysFolder string `conf:"default:zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
@@ -102,6 +113,28 @@ func run(ctx context.Context, log *logger.Logger) error {
 	}
 	log.Info(ctx, "startup", "config", out)
 	expvar.NewString("build").Set(build)
+
+	// -------------------------------------------------------------------------
+	// Database Support
+
+	log.Info(ctx, "startup", "status", "initializing database support", "host", cfg.DB.Host)
+
+	myDb, err := db.Open(db.Config{
+		User:         cfg.DB.User,
+		Password:     cfg.DB.Password,
+		Host:         cfg.DB.Host,
+		Name:         cfg.DB.Name,
+		MaxIdleConns: cfg.DB.MaxIdleConns,
+		MaxOpenConns: cfg.DB.MaxOpenConns,
+		DisableTLS:   cfg.DB.DisableTLS,
+	})
+	if err != nil {
+		return fmt.Errorf("connecting to myDb: %w", err)
+	}
+	defer func() {
+		log.Info(ctx, "shutdown", "status", "stopping database support", "host", cfg.DB.Host)
+		myDb.Close()
+	}()
 
 	// -------------------------------------------------------------------------
 	// Initialize authentication support
@@ -148,6 +181,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		Shutdown: shutdown,
 		Log:      log,
 		Auth:     auth,
+		DB:       myDb,
 	}
 
 	apiMux := v1.APIMux(cfgMux, handlers.Routes{})
