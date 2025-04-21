@@ -3,6 +3,8 @@ package checkgrp
 
 import (
 	"context"
+	"github.com/jmoiron/sqlx"
+	db "github.com/owezzy/service-5/business/data/dbsql/pgx"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
 	"net/http"
@@ -14,13 +16,15 @@ import (
 type Handlers struct {
 	build string
 	log   *logger.Logger
+	db    *sqlx.DB
 }
 
 // New constructs a Handlers api for the check group.
-func New(build string, log *logger.Logger) *Handlers {
+func New(build string, log *logger.Logger, db *sqlx.DB) *Handlers {
 	return &Handlers{
 		build: build,
 		log:   log,
+		db:    db,
 	}
 }
 
@@ -36,13 +40,17 @@ func (h *Handlers) Readiness(ctx context.Context, w http.ResponseWriter, r *http
 
 	status := "ok"
 	statusCode := http.StatusOK
+	if err := db.StatusCheck(ctx, h.db); err != nil {
+		status = "db not ready"
+		statusCode = http.StatusInternalServerError
+		h.log.Info(ctx, "readiness failure", "status", status)
+	}
 
 	data := struct {
 		Status string `json:"status"`
 	}{
 		Status: status,
 	}
-	h.log.Info(ctx, "Readiness request", "status", status)
 
 	return web.Respond(ctx, w, data, statusCode)
 }
