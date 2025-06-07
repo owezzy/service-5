@@ -5,16 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ardanlabs/conf/v3"
+	"github.com/google/uuid"
 	"github.com/owezzy/service-5/app/tooling/sales-admin/commands"
-	"github.com/owezzy/service-5/business/data/dbmigrate"
 	db "github.com/owezzy/service-5/business/data/dbsql/pgx"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/vault"
-	"log"
-	"time"
-
-	"github.com/ardanlabs/conf/v3"
-	"github.com/google/uuid"
+	"io"
+	"os"
 )
 
 var build = "develop"
@@ -40,71 +38,14 @@ type config struct {
 }
 
 func main() {
-	err := migrateSeed()
+	log := logger.New(io.Discard, logger.LevelInfo, "ADMIN", func(context.Context) string { return "00000000-0000-0000-0000-000000000000" })
 
-	if err != nil {
-		log.Fatalln(err)
-	}
-}
-
-func migrateSeed() error {
-	var cfg struct {
-		DB struct {
-			User         string `conf:"default:postgres"`
-			Password     string `conf:"default:postgres,mask"`
-			Host         string `conf:"default:database-service.sales-system.svc.cluster.local"`
-			Name         string `conf:"default:postgres"`
-			MaxIdleConns int    `conf:"default:2"`
-			MaxOpenConns int    `conf:"default:0"`
-			DisableTLS   bool   `conf:"default:true"`
+	if err := run(log); err != nil {
+		if !errors.Is(err, commands.ErrHelp) {
+			fmt.Println("msg", err)
 		}
+		os.Exit(1)
 	}
-
-	const prefix = "SALES"
-	help, err := conf.Parse(prefix, &cfg)
-	if err != nil {
-		if errors.Is(err, conf.ErrHelpWanted) {
-			fmt.Println(help)
-			return nil
-		}
-
-		return fmt.Errorf("parsing config: %w", err)
-	}
-
-	dbConfig := db.Config{
-		User:         cfg.DB.User,
-		Password:     cfg.DB.Password,
-		Host:         cfg.DB.Host,
-		Name:         cfg.DB.Name,
-		MaxIdleConns: cfg.DB.MaxIdleConns,
-		MaxOpenConns: cfg.DB.MaxOpenConns,
-		DisableTLS:   cfg.DB.DisableTLS,
-	}
-
-	myDb, err := db.Open(dbConfig)
-
-	if err != nil {
-		return fmt.Errorf("connect database: %w", err)
-	}
-	defer myDb.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := dbmigrate.Migrate(ctx, myDb); err != nil {
-		return fmt.Errorf("migrate database: %w", err)
-	}
-
-	fmt.Println("migrations complete")
-	//	----------------------------------
-
-	if err := dbmigrate.Seed(ctx, myDb); err != nil {
-		return fmt.Errorf("seed database: %w", err)
-	}
-
-	fmt.Println("seed data complete")
-
-	return nil
 }
 
 func run(log *logger.Logger) error {

@@ -1,6 +1,9 @@
 package usergrp
 
 import (
+	"net/http"
+
+	"github.com/jmoiron/sqlx"
 	"github.com/owezzy/service-5/business/core/event"
 	"github.com/owezzy/service-5/business/core/user"
 	"github.com/owezzy/service-5/business/core/user/stores/usercache"
@@ -10,9 +13,6 @@ import (
 	"github.com/owezzy/service-5/business/web/v1/mid"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
-	"net/http"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // Config contains all the mandatory systems required by handlers.

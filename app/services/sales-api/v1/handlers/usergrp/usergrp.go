@@ -1,9 +1,14 @@
+// Package usergrp maintains the group of handlers for user access.
 package usergrp
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/mail"
+	"time"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/owezzy/service-5/business/core/user"
 	"github.com/owezzy/service-5/business/data/page"
@@ -12,9 +17,6 @@ import (
 	"github.com/owezzy/service-5/business/web/v1/response"
 	"github.com/owezzy/service-5/foundation/validate"
 	"github.com/owezzy/service-5/foundation/web"
-	"net/http"
-	"net/mail"
-	"time"
 )
 
 // Handlers manages the set of user endpoints.

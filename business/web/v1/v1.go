@@ -6,16 +6,32 @@ import (
 	"github.com/owezzy/service-5/business/web/v1/mid"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
+	"go.opentelemetry.io/otel/trace"
+	"net/http"
 	"os"
 )
 
+// Options represent optional parameters.
+type Options struct {
+	corsOrigin string
+}
+
+// WithCORS provides configuration options for CORS.
+func WithCORS(origin string) func(opts *Options) {
+	return func(opts *Options) {
+		opts.corsOrigin = origin
+	}
+}
+
 // APIMuxConfig contains all the mandatory systems required by handlers.
 type APIMuxConfig struct {
-	Build    string
-	Shutdown chan os.Signal
-	Log      *logger.Logger
-	Auth     *auth.Auth
-	DB       *sqlx.DB
+	UsingWeaver bool
+	Build       string
+	Shutdown    chan os.Signal
+	Log         *logger.Logger
+	Auth        *auth.Auth
+	DB          *sqlx.DB
+	Tracer      trace.Tracer
 }
 
 // RouteAdder defines behavior that sets the routes to bind for an instance
@@ -25,10 +41,26 @@ type RouteAdder interface {
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
-func APIMux(cfg APIMuxConfig, routerAdder RouteAdder) *web.App {
-	app := web.NewApp(cfg.Shutdown, mid.Logger(cfg.Log), mid.Errors(cfg.Log), mid.Metrics(), mid.Panics())
+func APIMux(cfg APIMuxConfig, routeAdder RouteAdder, options ...func(opts *Options)) http.Handler {
+	var opts Options
+	for _, option := range options {
+		option(&opts)
+	}
 
-	routerAdder.Add(app, cfg)
+	app := web.NewApp(
+		cfg.Shutdown,
+		cfg.Tracer,
+		mid.Logger(cfg.Log),
+		mid.Errors(cfg.Log),
+		mid.Metrics(),
+		mid.Panics(),
+	)
+
+	if opts.corsOrigin != "" {
+		app.EnableCORS(mid.Cors(opts.corsOrigin))
+	}
+
+	routeAdder.Add(app, cfg)
 
 	return app
 }

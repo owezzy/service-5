@@ -2,12 +2,11 @@ package usergrp
 
 import (
 	"fmt"
-	"github.com/owezzy/service-5/business/core/user"
-	"github.com/owezzy/service-5/foundation/validate"
 	"net/mail"
 	"time"
 
-
+	"github.com/owezzy/service-5/business/core/user"
+	"github.com/owezzy/service-5/foundation/validate"
 )
 
 // AppUser represents information about an individual user.

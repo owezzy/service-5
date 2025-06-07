@@ -3,13 +3,14 @@ package checkgrp
 
 import (
 	"context"
-	"github.com/jmoiron/sqlx"
 	db "github.com/owezzy/service-5/business/data/dbsql/pgx"
 	"github.com/owezzy/service-5/foundation/logger"
 	"github.com/owezzy/service-5/foundation/web"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // Handlers manages the set of check endpoints.
@@ -23,8 +24,8 @@ type Handlers struct {
 func New(build string, log *logger.Logger, db *sqlx.DB) *Handlers {
 	return &Handlers{
 		build: build,
-		log:   log,
 		db:    db,
+		log:   log,
 	}
 }
 
@@ -87,8 +88,6 @@ func (h *Handlers) Liveness(ctx context.Context, w http.ResponseWriter, r *http.
 		Namespace:  os.Getenv("KUBERNETES_NAMESPACE"),
 		GOMAXPROCS: os.Getenv("GOMAXPROCS"),
 	}
-
-	h.log.Info(ctx, "Liveness request", "status", "OK")
 
 	// This handler provides a free timer loop.
 

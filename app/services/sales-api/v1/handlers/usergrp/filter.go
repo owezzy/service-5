@@ -1,13 +1,13 @@
 package usergrp
 
 import (
-	"github.com/owezzy/service-5/business/core/user"
-	"github.com/owezzy/service-5/foundation/validate"
 	"net/http"
 	"net/mail"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/owezzy/service-5/business/core/user"
+	"github.com/owezzy/service-5/foundation/validate"
 )
 
 func parseFilter(r *http.Request) (user.QueryFilter, error) {

@@ -10,11 +10,12 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 
 GOLANG          := golang:1.22
 ALPINE          := alpine:3.19
-KIND            := kindest/node:v1.29.1@sha256:a0cc28af37cf39b019e2b448c54d1a3f789de32536cb5a5db61a49623e527144
+KIND            := kindest/node:v1.32.2
 POSTGRES        := postgres:15.4
-GRAFANA         := grafana/grafana:10.3.0
-PROMETHEUS      := prom/prometheus:v2.49.0
-TEMPO           := grafana/tempo:2.3.0
+VAULT           := hashicorp/vault:1.15
+GRAFANA         := grafana/grafana:10.1.0
+PROMETHEUS      := prom/prometheus:v2.47.0
+TEMPO           := grafana/tempo:2.2.0
 LOKI            := grafana/loki:2.9.0
 PROMTAIL        := grafana/promtail:2.9.0
 
@@ -29,49 +30,35 @@ METRICS_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME)-metrics:$(VERSION)
 
 
 # ==============================================================================
-# run Stuff
+# dependencies setup
 
-run:
-	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
+dev-gotooling:
+	go install github.com/divan/expvarmon@latest
+	go install github.com/rakyll/hey@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install golang.org/x/tools/cmd/goimports@latest
 
-run-help:
-	go run app/services/sales-api/main.go --help | go run app/tooling/logfmt/main.go
+dev-brew:
+	brew update
+	brew tap hashicorp/tap
+	brew list kind || brew install kind
+	brew list kubectl || brew install kubectl
+	brew list kustomize || brew install kustomize
+	brew list pgcli || brew install pgcli
+	brew list vault || brew install hashicorp/tap/vault
 
-curl:
-	curl -il http://localhost:3000/hack
-
-
-load:
-	hey -m GET -c 100 -n 100000 "http://localhost:3000/v1/hack"
-
-curl-auth:
-	curl -il -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/hackauth
-
-load-hack:
-	hey -m GET -c 100 -n 100000 "http://localhost:3000/v1/hack"
-
-admin:
-	go run app/tooling/sales-admin/main.go
-
-ready:
-	curl -il http://localhost:3000/v1/readiness
-
-live:
-	curl -il http://localhost:3000/v1/liveness
-
-curl-create:
-	curl -il -X POST -H 'Content-Type: application/json' -d '{"name":"bill","email":"b@gmail.com","roles":["ADMIN"],"department":"IT","password":"123","passwordConfirm":"123"}' http://localhost:3000/v1/users
-
-
-
-# ==============================================================================
-# Administration
-
-migrate:
-	go run app/tooling/sales-admin/main.go migrate
-
-seed: migrate
-	go run app/tooling/sales-admin/main.go seed
+dev-docker:
+	docker pull $(GOLANG)
+	docker pull $(ALPINE)
+	docker pull $(KIND)
+	docker pull $(POSTGRES)
+	docker pull $(VAULT)
+	docker pull $(GRAFANA)
+	docker pull $(PROMETHEUS)
+	docker pull $(TEMPO)
+	docker pull $(LOKI)
+	docker pull $(PROMTAIL)
 
 
 # ==============================================================================
@@ -113,11 +100,11 @@ dev-up:
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 
 	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
-#	kind load docker-image $(GRAFANA) --name $(KIND_CLUSTER)
-#	kind load docker-image $(PROMETHEUS) --name $(KIND_CLUSTER)
-#	kind load docker-image $(TEMPO) --name $(KIND_CLUSTER)
-#	kind load docker-image $(LOKI) --name $(KIND_CLUSTER)
-#	kind load docker-image $(PROMTAIL) --name $(KIND_CLUSTER)
+	kind load docker-image $(GRAFANA) --name $(KIND_CLUSTER)
+	kind load docker-image $(PROMETHEUS) --name $(KIND_CLUSTER)
+	kind load docker-image $(TEMPO) --name $(KIND_CLUSTER)
+	kind load docker-image $(LOKI) --name $(KIND_CLUSTER)
+	kind load docker-image $(PROMTAIL) --name $(KIND_CLUSTER)
 
 dev-down:
 	kind delete cluster --name $(KIND_CLUSTER)
@@ -133,21 +120,37 @@ dev-status:
 # ------------------------------------------------------------------------------
 
 dev-load:
+	cd zarf/k8s/dev/sales; kustomize edit set image service-image=$(SERVICE_IMAGE)
 	kind load docker-image $(SERVICE_IMAGE) --name $(KIND_CLUSTER)
-#	kind load docker-image $(METRICS_IMAGE) --name $(KIND_CLUSTER)
 
+	cd zarf/k8s/dev/sales; kustomize edit set image metrics-image=$(METRICS_IMAGE)
+	kind load docker-image $(METRICS_IMAGE) --name $(KIND_CLUSTER)
 # podman is currently experimental, and fails for some reason with kind load
 # docker-image (possibly a tagging issue?) but the below works.
 
 dev-apply:
+	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
+
 	kustomize build zarf/k8s/dev/database | kubectl apply -f -
 	kubectl rollout status --namespace=$(NAMESPACE) --watch --timeout=120s sts/database
 
+	kustomize build zarf/k8s/dev/grafana | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=grafana --timeout=120s --for=condition=Ready
+
+	kustomize build zarf/k8s/dev/prometheus | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=prometheus --timeout=120s --for=condition=Ready
+
+	kustomize build zarf/k8s/dev/tempo | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=tempo --timeout=120s --for=condition=Ready
+
+	kustomize build zarf/k8s/dev/loki | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=loki --timeout=120s --for=condition=Ready
+
+	kustomize build zarf/k8s/dev/promtail | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=promtail --timeout=120s --for=condition=Ready
+
 	kustomize build zarf/k8s/dev/sales | kubectl apply -f -
 	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --timeout=120s --for=condition=Ready
-
-
-
 
 dev-restart:
 	kubectl rollout restart deployment $(APP) --namespace=$(NAMESPACE)
@@ -205,3 +208,90 @@ deps-clean-cache:
 list:
 	go list -mod=mod all
 
+
+# ==============================================================================
+# Class Stuff
+
+run:
+	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
+
+run-help:
+	go run app/services/sales-api/main.go --help | go run app/tooling/logfmt/main.go
+
+curl:
+	curl -il http://localhost:3000/v1/hack
+
+curl-auth:
+	curl -il -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/hackauth
+
+load-hack:
+	hey -m GET -c 100 -n 100000 "http://localhost:3000/v1/hack"
+
+admin:
+	go run app/tooling/sales-admin/main.go
+
+ready:
+	curl -il http://localhost:3000/v1/readiness
+
+live:
+	curl -il http://localhost:3000/v1/liveness
+
+curl-create:
+	curl -il -X POST -H 'Content-Type: application/json' -d '{"name":"bill","email":"b@gmail.com","roles":["ADMIN"],"department":"IT","password":"123","passwordConfirm":"123"}' http://localhost:3000/v1/users
+
+
+# ==============================================================================
+# Admin Frontend
+
+ADMIN_FRONTEND_PREFIX := ./app/frontends/admin
+
+write-token-to-env:
+	echo "VITE_SERVICE_API=http://localhost:3000/v1" > ${ADMIN_FRONTEND_PREFIX}/.env
+	make token | grep -o '"ey.*"' | awk '{print "VITE_SERVICE_TOKEN="$$1}' >> ${ADMIN_FRONTEND_PREFIX}/.env
+
+admin-gui-install:
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} install
+
+admin-gui-dev: admin-gui-install
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} run dev
+
+admin-gui-build: admin-gui-install
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} run build
+
+admin-gui-start-build: admin-gui-build
+	pnpm -C ${ADMIN_FRONTEND_PREFIX} run preview
+
+admin-gui-run: write-token-to-env admin-gui-start-build
+
+# ==============================================================================
+# Running using Service Weaver.
+
+wea-dev-gotooling: dev-gotooling
+	go install github.com/ServiceWeaver/weaver/cmd/weaver@latest
+	go install github.com/ServiceWeaver/weaver-kube/cmd/weaver-kube@latest
+
+wea-dev-up:
+	kind create cluster \
+		--image $(KIND) \
+		--name $(KIND_CLUSTER) \
+		--config zarf/k8s/dev/kind-config.yaml
+
+	kubectl --context=kind-$(KIND_CLUSTER) wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
+
+	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
+
+wea-dev-down:
+	kind delete cluster --name $(KIND_CLUSTER)
+
+# ------------------------------------------------------------------------------
+
+wea-dev-apply:
+	kustomize build zarf/k8s/dev/database | kubectl --context=kind-$(KIND_CLUSTER) apply -f -
+	kubectl rollout status --context=kind-$(KIND_CLUSTER) --namespace=$(NAMESPACE) --watch --timeout=120s sts/database
+
+	cd app/weaver/sales-api; GOOS=linux GOARCH=amd64 go build .
+	$(eval WEAVER_YAML := $(shell weaver-kube deploy app/weaver/sales-api/dev.toml))
+	kind load docker-image $(SERVICE_IMAGE) --name $(KIND_CLUSTER)
+
+	kubectl --context=kind-$(KIND_CLUSTER) apply -f $(WEAVER_YAML)
+	kubectl wait pods --namespace=$(NAMESPACE) --selector appName=$(APP)-api --timeout=120s --for=condition=Ready

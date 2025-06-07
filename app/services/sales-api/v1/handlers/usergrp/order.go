@@ -2,10 +2,11 @@ package usergrp
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/owezzy/service-5/business/core/user"
 	"github.com/owezzy/service-5/business/data/order"
 	"github.com/owezzy/service-5/foundation/validate"
-	"net/http"
 )
 
 func parseOrder(r *http.Request) (order.By, error) {

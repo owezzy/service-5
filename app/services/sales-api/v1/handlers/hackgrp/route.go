@@ -9,8 +9,9 @@ import (
 
 // Config contains all the mandatory systems required by handlers.
 type Config struct {
-	Auth *auth.Auth
-	Build string
+	UsingWeaver bool
+	Build       string
+	Auth        *auth.Auth
 }
 
 func Routes(app *web.App, cfg Config) {
